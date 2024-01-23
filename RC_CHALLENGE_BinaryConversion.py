@@ -1,5 +1,5 @@
 # CONVERT A FLOAT TO A BINARY NUMBER
-# 1/23/2024
+# 1/23/2024, Rebecca Caudill
 
 def binFunc(decNum):
     # SEPARATE INTEGER AND DECIMAL VALUES
