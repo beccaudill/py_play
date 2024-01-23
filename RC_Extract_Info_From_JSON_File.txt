@@ -1,0 +1,114 @@
+#AUTHOR - Rebecca Caudill, LIS Coordinator
+#DATE - 9/30/2022
+#PURPOSE - Combine all multiple JSON files into a single CSV file.
+
+import json
+import os
+
+#JSON FILES FOLDER PATH
+dir_path = r"C:\\JSON_Files\\"
+
+#JSON FILE LIST OBJECT
+bbfiles = []
+
+#OPEN CSV OUTPUT FILES
+e = open("LookBack.txt", "a")
+
+#ADD COLUMN HEADERS TO CSV FILE
+e.write("MRN,CENTER,DOB,GENDER,STATUS,ABO,RH,PROVIDER,INPUT DT,INPUT BY,LNAME,FNAME,MI,BLOOD_ATTRIBUTES,COMMENTS" + "\n")
+
+#BUILD JSON FILE LIST
+for path in os.listdir(dir_path):
+    if os.path.isfile(os.path.join(dir_path, path)):
+        bbfiles.append(path)
+
+#WRITE FILE DATA TO SINGLE CSV FILE
+for bbf in bbfiles:
+    file_name = dir_path + bbf
+    with open(file_name, "r") as f:
+        data = json.load(f)
+    #EXTRACT PATIENT INFO
+    if data.get("originalPatientId"):
+        mrn = data["originalPatientId"]
+    else:
+        mrn = "BLANK"
+    if data.get("patient"):
+        center = data["patient"]["centerCd"]
+        bdate = data["patient"]["birthDate"]
+        gender = data["patient"]["genderCd"]
+        status = data["patient"]["patientStatusCd"]
+        abo = data["patient"]["aboCd"]
+        rh = data["patient"]["rhCd"]
+    else:
+        center = "BLANK"
+        bdate = "BLANK"
+        gender = "UNKNOWN"
+        status = "UNKNOWN"
+        abo = "UNKNOWN"
+        rh = "UNKNOWN"
+    if data.get("patientMedicalRecords"):
+        try:
+            provider = data["patientMedicalRecords"][0]["providerId"]
+        except KeyError:
+            provider = "BLANK"
+        try:
+            inputdt = data["patientMedicalRecords"][0]["enteredDateTime"]
+        except KeyError:
+            inputdt = "BLANK"
+        try:
+            inputby = data["patientMedicalRecords"][0]["enteredBy"]
+        except KeyError:
+            inputby = "BLANK"
+    if data.get("patientNames"):
+        try:
+            lname = data["patientNames"][0]["lname"]
+        except KeyError:
+            lname = "BLANK"
+        try:
+            fname = data["patientNames"][0]["fname"]
+        except KeyError:
+            fname = "BLANK"
+        try:
+            mname = data["patientNames"][0]["mname"]
+        except KeyError:
+            mname = "BLANK"
+    x = mrn + "," + center + "," + bdate + "," + gender + "," + status + "," + abo + "," + rh + "," + provider + "," + inputdt + "," + inputby + "," + lname + "," + fname + "," + mname
+    #print(x)
+    #EXTRACT BLOOD ATTRIBUTES
+    ba = ""
+    if data.get("patientBloodAttributes"):
+        ba = ","
+        a = len(data["patientBloodAttributes"])-1
+        i = 0
+        while i <= a:
+            if i == a:
+                ba += data["patientBloodAttributes"][i]["dateTimeIdentified"] + ":" + data["patientBloodAttributes"][i]["bloodAttributeTypeCd"] + " " + data["patientBloodAttributes"][i]["bloodAttributeCd"] + " " + data["patientBloodAttributes"][i]["presenceFlagCd"]
+            else:
+                ba += data["patientBloodAttributes"][i]["dateTimeIdentified"] + ":" + data["patientBloodAttributes"][i]["bloodAttributeTypeCd"] + " " + data["patientBloodAttributes"][i]["bloodAttributeCd"] + " " + data["patientBloodAttributes"][i]["presenceFlagCd"] + "|"
+            i += 1
+    else:
+        ba += "," + "NO BLOOD ATTRIBUTES AVAILABLE"   
+    x += ba
+    #print(x)
+    #EXTRACT PATIENT COMMENTS
+    pcmnt = ""
+    if data.get("patientComments"):
+        pcmnt = ","
+        b = len(data["patientComments"])-1
+        i = 0
+        while i <= b:
+            if i == b:
+                pcmnt += data["patientComments"][i]["startDateTime"] + ":" + data["patientComments"][i]["description"]
+            else:
+                pcmnt += data["patientComments"][i]["startDateTime"] + ":" + data["patientComments"][i]["description"] + "|"
+            i += 1
+    else:
+        pcmnt += "," + "NO COMMENTS AVAILABLE"
+    x += pcmnt + "\n"
+    #APPEND TO TEXT FILE
+    #print(x)
+    e.write(x)
+
+#CLOSE CSV FILE
+e.close()
+
